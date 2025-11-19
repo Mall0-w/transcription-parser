@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
-import os
+from app.models.callinfo import CallInfo
 
 # llm = ChatOpenAI(
 #     model="gpt-4o-mini",
@@ -12,22 +12,20 @@ import os
 llm = ChatOllama(
     model="mistral",
     temperature=0,
-    # other params...
 )
+
+structured_llm = structured_llm = llm.with_structured_output(CallInfo)
 
 prompt = ChatPromptTemplate.from_messages([
     (
         "system",
-        "You extract structured information from transcriptions. "
-        "Return ONLY valid JSON following this schema: "
-        "{{keyword: extracted_value_or_empty_string}}."
+        "Extract the fields required by the schema from the call transcription. "
+        "If information is missing, return null or an empty value."
     ),
     (
         "user",
-        "Transcription:\n{transcription}\n\n"
-        "Keywords:\n{keywords}\n\n"
-        "Extract one value per keyword. If not found, return an empty string."
+        "Transcription:\n{transcription}"
     )
 ])
 
-chain = prompt | llm
+primitive_chain = prompt | structured_llm

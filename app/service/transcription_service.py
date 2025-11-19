@@ -4,14 +4,13 @@ from elevenlabs.client import ElevenLabs
 import os
 from typing import Optional, List, Dict
 from io import BytesIO
-from langchain.agents import create_agent
-from app.models import constants
 from app.chains import keyword_parser
 import json
 
 elevenlabs = ElevenLabs(
   api_key=os.getenv("ELEVENLABS_API_KEY"),
 )
+
 
 client = AsyncOpenAI()
 
@@ -26,19 +25,12 @@ async def transcribe_audio(audio_data: BytesIO):
 
     return transcription_object.text
 
-async def parse_keywords(transcription: str, keywords: Optional[List[str]] = constants.TRANSCRIPTION_KEYWORDS) -> Dict[str, str]:
+async def parse_keywords(transcription: str) -> Dict[str, str]:
     """
     Takes a transcription of a call and a list of keywords and gives values for those keywords
     according to information found in the transcription
     """
-    response = await keyword_parser.chain.ainvoke({
-        "transcription": transcription,
-        "keywords": keywords,
+    response = await keyword_parser.primitive_chain.ainvoke({
+        "transcription": transcription
     })
-
-    # LLM returns a JSON string — parse it
-    try:
-        return json.loads(response.content)
-    except Exception:
-        # fallback: return empty dict for all keywords
-        return {k: "" for k in keywords}
+    return response.model_dump()

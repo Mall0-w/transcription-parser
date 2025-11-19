@@ -1,0 +1,5 @@
+- endpoint that chunks large audio
+
+- websocket endpoint that uses the real time features of elevenlabs
+
+- mock RAG endpoint
