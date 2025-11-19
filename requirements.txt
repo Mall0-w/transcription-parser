@@ -5,3 +5,4 @@ langchain-huggingface
 langchain-ollama
 openai
 elevenlabs
+langchain-text-splitters

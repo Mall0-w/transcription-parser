@@ -1,8 +1,12 @@
-from fastapi import APIRouter, UploadFile, Form
+from fastapi import APIRouter, UploadFile, Form, WebSocket
 from typing import Annotated
 from app.service.transcription_service import transcribe_audio, parse_keywords
 from app.util.text_cleaner import chunk_text
 import asyncio
+import logging
+
+
+logger = logging.getLogger("uvicorn")
 
 router = APIRouter(
     prefix="/transcription",
@@ -36,3 +40,40 @@ async def transcribe_call_primitive(audioFile: UploadFile, claimNumber: Annotate
     keyword_values = {key: value for chunk_keywords in all_keys for key, value in chunk_keywords.items()}
 
     return {"claimNumber": claimNumber, "fileName": audioFile.filename, "text": transcription, "keywords": keyword_values}
+
+@router.post("/rolling")
+async def transcribe_call_rolling(audioFile: UploadFile, claimNumber: Annotated[str, Form()]):
+    """
+    Workflow:
+    grab transcription
+    send transcription to the parser in a rolling fashion, updating the keyword dict as we go.
+    """
+
+    return {"message" : "Hello, World!"}
+
+
+@router.post("/rag")
+async def transcribe_call_rag(audioFile: UploadFile, claimNumber: Annotated[str, Form()]):
+    """
+    Workflow:
+    grab transcription
+    chunk transcription into smaller pieces
+    store chunks in vector db
+    use RAG to extract keywords from vector db
+    """
+
+    return {"message" : "Hello, World!"}
+
+
+@router.websocket("/realtime")
+async def transcribe_call_realtime(websocket: WebSocket):
+    """
+    Workflow:
+    accept websocket audio stream
+    transcribe audio stream in real-time
+    parse keywords in real-time
+    send keywords back to client in real-time
+    """
+
+    await websocket.accept()
+    logger.info("WebSocket connection accepted")

@@ -19,13 +19,17 @@ structured_llm = structured_llm = llm.with_structured_output(CallInfo)
 prompt = ChatPromptTemplate.from_messages([
     (
         "system",
-        "Extract the fields required by the schema from the call transcription. "
-        "If information is missing, return null or an empty value."
+        "You are an expert information extraction engine. "
+        "Extract *every possible field* from the transcription and map it "
+        "to the schema exactly.\n\n"
+        "Rules:\n"
+        "- Do NOT omit fields if the information clearly appears.\n"
+        "- If the value is implied, infer it.\n"
+        "- If the value is completely missing, only then return null.\n"
+        "- Use the transcription wording as the source of truth.\n\n"
+        f"Schema fields to extract: {CallInfo.model_fields.keys()}"
     ),
-    (
-        "user",
-        "Transcription:\n{transcription}"
-    )
+    ("user", "Transcription:\n{transcription}")
 ])
 
 primitive_chain = prompt | structured_llm
