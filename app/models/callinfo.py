@@ -7,3 +7,6 @@ class CallInfo(BaseModel):
     loss_cause: str | None = None
     claimant_name: str | None = None
     claimant_address: str | None = None
+
+class RollingCallInfo(CallInfo):
+    summary: str

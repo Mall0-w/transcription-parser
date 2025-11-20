@@ -1,4 +1,4 @@
-def chunk_text(text: str, max_tokens: int = 1000) -> list[str]:
+def chunk_text(text: str, max_tokens: int = 2500) -> list[str]:
     """
     Splits the text into chunks that are within the max token limit.
     Assumes 1 token ≈ 4 characters.

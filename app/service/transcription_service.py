@@ -34,3 +34,20 @@ async def parse_keywords(transcription: str) -> Dict[str, str]:
         "transcription": transcription
     })
     return response.model_dump()
+
+async def parse_keywords_rolling(transcription: str, existing_keywords: Optional[Dict[str, str]] = None, existing_context: Optional[str] = None) -> Dict[str, str]:
+    """
+    Takes a transcription of a call and a list of keywords and gives values for those keywords
+    according to information found in the transcription.  Uses existing keywords to fill in any missing info.
+    """
+    if existing_keywords is None:
+        existing_keywords = {}
+
+    response = await keyword_parser.rolling_chain.ainvoke({
+        "transcription": transcription,
+        "existing_keywords": existing_keywords,
+        "existing_context": existing_context
+    })
+    response_dict = response.model_dump()
+    summary = response_dict.pop("summary", "")
+    return response_dict, summary

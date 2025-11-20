@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, Form, WebSocket
 from typing import Annotated
-from app.service.transcription_service import transcribe_audio, parse_keywords
+from app.service.transcription_service import transcribe_audio, parse_keywords, parse_keywords_rolling
 from app.util.text_cleaner import chunk_text
 import asyncio
 import logging
@@ -30,7 +30,7 @@ async def transcribe_call_primitive(audioFile: UploadFile, claimNumber: Annotate
     #chunck the transcription if too long for llm.  
 
     #1 most models have a limit of 4,000 tokens (16,000 characters approx), go on side of error
-    chunks = chunk_text(transcription, max_tokens=3000)  # e.g., 2000 token limit
+    chunks = chunk_text(transcription)  # e.g., 2000 token limit
 
     #pass all calls to the parser and wait for all to complete
     tasks = [parse_keywords(chunk) for chunk in chunks]
@@ -48,8 +48,22 @@ async def transcribe_call_rolling(audioFile: UploadFile, claimNumber: Annotated[
     grab transcription
     send transcription to the parser in a rolling fashion, updating the keyword dict as we go.
     """
+    #elevenlabs can take a file of up to 3GB according to their docs, so no need to chunk for now
+    #a 90 minute call will be at worst around 1GB more likely than not; safe to assume calls will be under 3GB for now.
+    transcription = await transcribe_audio(audioFile.file)
+    #chunck the transcription if too long for llm.  
 
-    return {"message" : "Hello, World!"}
+    #1 most models have a limit of 4,000 tokens (16,000 characters approx), go on side of error
+    chunks = chunk_text(transcription)  # e.g., 2000 token limit
+
+    keywords = {}
+    summary = ""
+    for chunk in chunks:
+        chunk_keywords, summary = await parse_keywords_rolling(chunk, keywords, summary)
+        keywords.update(chunk_keywords)
+        logger.info(f"summary: {summary}")
+
+    return {"claimNumber": claimNumber, "fileName": audioFile.filename, "text": transcription, "keywords": keywords}
 
 
 @router.post("/rag")
